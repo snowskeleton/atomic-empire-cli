@@ -1,0 +1,7 @@
+*__pycache__
+.pytest_cache
+.venv
+
+sql_app.db
+garbage.html
+cookies.json
