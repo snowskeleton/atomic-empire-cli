@@ -1,14 +1,14 @@
-from getpass import getpass
+from functools import update_wrapper
+from typing import List
 
 import click
-from functools import update_wrapper
 
 from aeapi import AtomicEmpireAPI
 
 from models.database import SessionLocal
 from models.card import Card
 from models.deck import Deck
-from models.crud import save_deck, get_deck
+from models.crud import save_deck, get_deck, get_decks
 
 db = SessionLocal()
 
@@ -117,10 +117,9 @@ def _search(
 
 
 @cli.command()
-def login():
-    username = input("Login email: ")
-    password = getpass()
-
+@click.option('--email', '-e', prompt=True, help='Login email for atomicempire.com')
+@click.option('--password', '-p', prompt=True, hide_input=True, confirmation_prompt=True, help='Login password for atomicempire.com')
+def login(username: str, password: str):
     api = AtomicEmpireAPI()
     api.login(username, password)
     print('Login successfull')
@@ -161,6 +160,53 @@ def add(name: str):
     deck.cards = [Card(text=line) for line in lines]
     save_deck(db=db, deck=deck)
     print(deck)
+
+
+@deck.command()
+@click.option('--name', '-n', default=None, help='Print deck by name')
+@click.option('--all', '-a', is_flag=True, default=True, help='Print all decks')
+@click.option('--names-only', '-o', is_flag=True, default=False, help='Print all deck names')
+def list(name: str, all: bool, names_only: bool):
+    if name:
+        deck = get_deck(db=db, deck_name=name)
+        print(deck)
+    elif names_only:
+        decks = get_decks(db=db)
+        [print(deck.name) for deck in decks]
+    elif all:
+        decks = get_decks(db=db)
+        [print(deck) for deck in decks]
+
+
+@deck.command()
+@click.option('--name', '-n', required=True, help='Update purchased-status for cards in a deck by name')
+@click.option('--unowned', '-u', is_flag=True, help='Only show cards not marked as owned')
+@click.option('--owned', '-o', is_flag=True, help='Only show cards currently marked as owned')
+@click.option('--all', '-a', is_flag=True, help='Show all cards in deck')
+def update(name: str, unowned: bool, owned: bool, all: bool):
+    deck = get_deck(db=db, deck_name=name)
+
+    cardsToBuy: List[Card]
+    if unowned:
+        cardsToBuy = [card for card in deck.cards if not card.bought]
+    elif owned:
+        cardsToBuy = [card for card in deck.cards if card.bought]
+    elif all:
+        cardsToBuy = [card for card in deck.cards]
+    else:
+        print('Please select cards to look at')
+        return
+
+    if len(cardsToBuy) < 1:
+        print("No cards match criteria")
+        return
+
+    print('Do you own these cards?')
+    for card in cardsToBuy:
+        card.bought = click.confirm(f'{card}', default=None)
+
+    save_deck(db=db, deck=deck)
+
 
 
 cli.add_command(deck)
