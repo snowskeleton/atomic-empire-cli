@@ -36,4 +36,3 @@ class Deck(Base):
             deckList += ['Need to Buy:']
             deckList += [card.__repr__() for card in cardsToBuy]
         return '\n'.join(deckList)
-        # return '\n'.join([self.name] + [card.__repr__() for card in self.cards])

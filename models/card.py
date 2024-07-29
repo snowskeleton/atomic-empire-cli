@@ -22,7 +22,8 @@ class Card(Base):
     set = Column(String)
     foil = Column(Boolean)
     etched = Column(Boolean)
-    quantity = Column(Integer)
+    quantity_owned = Column(Integer)
+    quantity_needed = Column(Integer)
     collector_number = Column(Integer)
 
     bought = Column(Boolean)
@@ -43,7 +44,8 @@ class Card(Base):
         # Initialize defaults
         self.id = str(uuid.uuid4())
         self.deck = deck
-        self.quantity = 1
+        self.quantity_needed = 1
+        self.quantity_owned = 0
         self.name = ""
         self.set = ""
         self.collector_number = None
@@ -54,14 +56,15 @@ class Card(Base):
         # Define a regex pattern to match the input text
 
         if card:
-            self.quantity = card.quantity
+            self.quantity_needed = card.quantity_needed
+            self.quantity_owned = card.quantity_owned
             self.name = card.name
             self.set = card.set
             self.collector_number = card.collector_number
         elif text:
             pattern = r"(?:(\d+)\s+)?(.+?)(?:\s+\(([^)]+)\))?(?:\s+(\d+))?$"
             match = re.match(pattern, text)
-            self.quantity = int(match.group(1)) if match.group(1) else 1
+            self.quantity_needed = int(match.group(1)) if match.group(1) else 1
             self.name = match.group(2)
             self.set = match.group(3)
             self.collector_number = match.group(4)
@@ -69,4 +72,4 @@ class Card(Base):
             raise("No data provided to instantiate card")
 
     def __repr__(self):
-        return ' '.join([str(self.quantity), self.name])
+        return ' '.join([f'{self.quantity_owned}/{self.quantity_needed}', self.name])
