@@ -6,9 +6,9 @@ from typing import List
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-import models.card
+from . import card
 
-from models.database import Base
+from .database import Base
 
 
 class Deck(Base):
@@ -17,22 +17,24 @@ class Deck(Base):
     id = Column(String, primary_key=True)
     name = Column(String)
     cards = relationship("Card", back_populates="deck")
-    wishlist_id = Column(String, ForeignKey("wishlists.id"))
+    # wishlist_id = Column(String, ForeignKey("wishlists.id"))
     wishlist = relationship("Wishlist", back_populates="deck", uselist=False)
 
-    def __init__(self, name: str, cards: List[models.card.Card] = []):
+    def __init__(self, name: str, cards: List[card.Card] = []):
         self.id = str(uuid4())
         self.name = name
         self.cards = cards
 
     def __repr__(self):
-        deckList = [self.name]
-        cardsBought = [card for card in self.cards if card.bought]
+        deckList = ['Name: ' + self.name]
+        cardsBought = [
+            card for card in self.cards if card.quantity_owned == card.quantity_needed]
         if len(cardsBought) > 0:
-            deckList += ['Bought:']
+            deckList += ['Owned:']
             deckList += [card.__repr__() for card in cardsBought]
-        cardsToBuy = [card for card in self.cards if not card.bought]
+        cardsToBuy = [
+            card for card in self.cards if card.quantity_owned != card.quantity_needed]
         if len(cardsToBuy) > 0:
-            deckList += ['Need to Buy:']
+            deckList += ['Need More:']
             deckList += [card.__repr__() for card in cardsToBuy]
         return '\n'.join(deckList)

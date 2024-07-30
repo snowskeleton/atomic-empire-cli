@@ -141,10 +141,10 @@ def add(name: str):
     # 2 Doomfall (HOU)
     # 2 Doomfall (HOU) 62
 
-    print("Paste your deck here and hit <Enter>:")
     deck = get_deck(db, name)
     lines = []
     newlineCount = 0
+    print("Paste your deck here and hit <Enter>:")
     while True:
         line = input()
         if not line:
@@ -201,9 +201,12 @@ def update(name: str, unowned: bool, owned: bool, all: bool):
         print("No cards match criteria")
         return
 
-    print('Do you own these cards?')
+    print('Enter the quantities of these cards that you own:')
     for card in cardsToBuy:
-        card.bought = click.confirm(f'{card}', default=None)
+        quantity = click.prompt(f'{card}', type=int,
+                                default=-1, show_default=False)
+        if quantity != -1:
+            card.quantity_owned = quantity
 
     save_deck(db=db, deck=deck)
 

@@ -8,9 +8,9 @@ from dataclasses import dataclass
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-import models.deck
+from . import deck
 
-from models.database import Base
+from .database import Base
 
 
 @dataclass
@@ -31,7 +31,7 @@ class Card(Base):
     deck_id = Column(String, ForeignKey("decks.id"))
     deck = relationship("Deck", back_populates="cards")
 
-    def __init__(self, deck: models.deck.Deck = None, text: str = None, foil: bool = False, etched: bool = False, card: Card = None):
+    def __init__(self, deck: deck.Deck = None, text: str = None, foil: bool = False, etched: bool = False, card: Card = None):
         """create object from text input, with format
         <amount> <Card Name> (<Set>) <Collector Number>
         where "amount", "set", and "collector number" are optional.

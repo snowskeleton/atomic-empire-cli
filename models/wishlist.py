@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import Boolean, Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 
-from models.database import Base
+from .database import Base
 
 
 class Wishlist(Base):
@@ -12,6 +12,8 @@ class Wishlist(Base):
     id = Column(String, primary_key=True)
     name = Column(String)
     private = Column(Boolean, default=True)
+
+    deck_id = Column(String, ForeignKey("decks.id"))
 
     deck = relationship("Deck", back_populates="wishlist")
 

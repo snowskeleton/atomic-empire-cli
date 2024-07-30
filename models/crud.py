@@ -2,8 +2,9 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
-from models.card import Card
-from models.deck import Deck
+from .card import Card
+from .deck import Deck
+from .wishlist import Wishlist
 
 
 def get_deck(db: Session, deck_name: str):
