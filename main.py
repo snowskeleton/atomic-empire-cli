@@ -2,6 +2,7 @@ from functools import update_wrapper
 from typing import List
 
 import click
+import questionary
 
 from aeapi import AtomicEmpireAPI
 
@@ -9,6 +10,7 @@ from models.database import SessionLocal
 from models.card import Card
 from models.deck import Deck
 from models.crud import save_deck, get_deck, get_decks
+from models.remote_card import RemoteCard
 
 db = SessionLocal()
 
@@ -40,8 +42,10 @@ def search(*args, **options):
     etched = options.get('etched')
     normal = options.get('normal')
 
-    api = AtomicEmpireAPI()
-    cards = _search(api, name, in_stock, foil, etched, normal)
+    # api = AtomicEmpireAPI()
+    cards = _search(name, in_stock, foil, etched, normal)
+    # click.prompt('Pick a card, any card',
+    #              type=click.Choice([card for card in cards]))
     [print(card) for card in cards]
 
 
@@ -55,7 +59,7 @@ def wishlist(*args, **options):
     normal = options.get('normal')
 
     api = AtomicEmpireAPI()
-    cards = _search(api, name, in_stock, foil, etched, normal)
+    cards = _search(name, in_stock, foil, etched, normal)
 
     if not cards:
         print("No cards found with search terms.")
@@ -92,14 +96,13 @@ def wishlist(*args, **options):
 
 
 def _search(
-    api: AtomicEmpireAPI,
     name: str,
-    in_stock: bool,
-    foil: bool,
-    etched: bool,
-    normal: bool
-):
-    cards = api.search_cards(
+    in_stock: bool = None,
+    foil: bool = None,
+    etched: bool = None,
+    normal: bool = None,
+) -> List[RemoteCard]:
+    cards = AtomicEmpireAPI().search_cards(
         name,
         in_stock=in_stock,
         only_foil=foil or etched,
@@ -119,9 +122,9 @@ def _search(
 @cli.command()
 @click.option('--email', '-e', prompt=True, help='Login email for atomicempire.com')
 @click.option('--password', '-p', prompt=True, hide_input=True, confirmation_prompt=True, help='Login password for atomicempire.com')
-def login(username: str, password: str):
+def login(email: str, password: str):
     api = AtomicEmpireAPI()
-    api.login(username, password)
+    api.login(email, password)
     print('Login successfull')
 
 
@@ -131,7 +134,7 @@ def deck():
 
 
 @deck.command()
-@click.option('--name', required=True, help='Name your deck.')
+@click.option('--name', '-n', required=True, help='Name your deck.')
 def add(name: str):
     # ask user for card names like this:
     # <amount> <Card Name> (<Set>) <Collector Number>
@@ -180,25 +183,17 @@ def list(name: str, all: bool, names_only: bool):
 
 @deck.command()
 @click.option('--name', '-n', required=True, help='Update purchased-status for cards in a deck by name')
-@click.option('--unowned', '-u', is_flag=True, help='Only show cards not marked as owned')
-@click.option('--owned', '-o', is_flag=True, help='Only show cards currently marked as owned')
-@click.option('--all', '-a', is_flag=True, help='Show all cards in deck')
-def update(name: str, unowned: bool, owned: bool, all: bool):
+# @click.option('--unowned', '-u', is_flag=True, help='Only show cards not marked as owned')
+# @click.option('--owned', '-o', is_flag=True, help='Only show cards currently marked as owned')
+# @click.option('--all', '-a', is_flag=True, help='Show all cards in deck')
+def update(name: str):
     deck = get_deck(db=db, deck_name=name)
 
     cardsToBuy: List[Card]
-    if unowned:
-        cardsToBuy = [card for card in deck.cards if not card.bought]
-    elif owned:
-        cardsToBuy = [card for card in deck.cards if card.bought]
-    elif all:
-        cardsToBuy = [card for card in deck.cards]
-    else:
-        print('Please select cards to look at')
-        return
+    cardsToBuy = [card for card in deck.cards]
 
     if len(cardsToBuy) < 1:
-        print("No cards match criteria")
+        print("No cards in deck")
         return
 
     print('Enter the quantities of these cards that you own:')
@@ -210,6 +205,48 @@ def update(name: str, unowned: bool, owned: bool, all: bool):
 
     save_deck(db=db, deck=deck)
 
+
+@deck.command()
+@click.option('--name', '-n', required=True, help='Add purchasable cards from named deck to wishlist')
+def purchase(name: str):
+    deck = get_deck(db=db, deck_name=name)
+    wishlist = AtomicEmpireAPI().create_or_get_wishlist('Cards to buy')
+    for card in [card for card in deck.cards if card.need_more]:
+        kwargs = {
+            'name': card.name,
+            'in_stock': True,
+        }
+        if card.foil != None:
+            kwargs.update({'foil': card.foil})
+        if card.etched != None:
+            kwargs.update({'foil': card.etched})
+        if card.foil == False and card.etched == False:
+            kwargs.update({'normal': True})
+        remote_cards = _search(**kwargs)
+
+        if len(remote_cards) == 0:
+            print(f'None in stock for: {card.name}')
+            continue
+
+        selection = questionary.select(
+            "Select the cards you want to add to your wishlist:",
+            choices=[questionary.Choice(title="None", value=False)] + [
+                questionary.Choice(title=card.__repr__(), value=card) for card in remote_cards
+            ],
+            show_selected=True,
+        ).unsafe_ask()
+        if selection:
+            AtomicEmpireAPI().add_to_wishlist(
+                card=selection,
+                quantity=min(card.count_needed, selection.quantity_available),
+                wishlist=wishlist,
+            )
+
+
+@cli.command()
+def get_wishlists():
+    response = AtomicEmpireAPI().get_wish_lists()
+    print(response)
 
 
 cli.add_command(deck)

@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 
 from .card import Card
 from .deck import Deck
-from .wishlist import Wishlist
 
 
 def get_deck(db: Session, deck_name: str):

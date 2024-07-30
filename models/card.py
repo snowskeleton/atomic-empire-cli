@@ -26,12 +26,18 @@ class Card(Base):
     quantity_needed = Column(Integer)
     collector_number = Column(Integer)
 
-    bought = Column(Boolean)
-
     deck_id = Column(String, ForeignKey("decks.id"))
     deck = relationship("Deck", back_populates="cards")
 
-    def __init__(self, deck: deck.Deck = None, text: str = None, foil: bool = False, etched: bool = False, card: Card = None):
+    @property
+    def need_more(self) -> bool:
+        return self.quantity_needed > self.quantity_owned
+
+    @property
+    def count_needed(self) -> int:
+        return self.quantity_needed - self.quantity_owned
+
+    def __init__(self, deck: deck.Deck = None, text: str = None, foil: bool = None, etched: bool = None, card: Card = None):
         """create object from text input, with format
         <amount> <Card Name> (<Set>) <Collector Number>
         where "amount", "set", and "collector number" are optional.
@@ -51,7 +57,7 @@ class Card(Base):
         self.collector_number = None
         self.foil = foil
         self.etched = etched
-        self.bought = False
+        # self.bought = False
 
         # Define a regex pattern to match the input text
 

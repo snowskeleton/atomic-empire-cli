@@ -1,7 +1,8 @@
-from time import time
+import re
 import json
 import os.path
 
+# from time import time
 from typing import List, Callable
 
 import requests
@@ -9,6 +10,8 @@ from requests import Response, post, get
 from bs4 import BeautifulSoup
 
 from models.card import Card
+from models.remote_card import RemoteCard
+from models.wishlist import Wishlist
 
 
 class AtomicEmpireAPI:
@@ -53,23 +56,11 @@ class AtomicEmpireAPI:
             response.raise_for_status()
         return response
 
-    def _get(self, url: str, **kwargs) -> dict:
+    def _get(self, url: str, **kwargs) -> Response:
         return self.__call(self.session.get, url, **kwargs)
 
-    def _post(self, url: str, **kwargs) -> dict:
+    def _post(self, url: str, **kwargs) -> Response:
         return self.__call(self.session.post, url, **kwargs)
-
-    # def get(self, endpoint, params=None):
-    #     url = f"{self.base_url}{endpoint}"
-    #     response = self.session.get(
-    #         url, headers=self.headers, cookies=self.session.cookies, params=params)
-    #     return response
-
-    # def post(self, endpoint, data=None):
-    #     url = f"{self.base_url}{endpoint}"
-    #     response = self.session.post(
-    #         url, headers=self.headers, cookies=self.session.cookies, data=data)
-    #     return response
 
     def login(self, email, password):
         login_data = {
@@ -93,7 +84,7 @@ class AtomicEmpireAPI:
         in_stock=False,
         only_foil=False,
         include_foil=True,
-    ) -> List[Card]:
+    ) -> List[RemoteCard]:
         endpoint = "/Card/List"
         params = {"txt": query}
         if in_stock:
@@ -111,31 +102,66 @@ class AtomicEmpireAPI:
 
         return cards
 
-    def add_to_wishlist(self, card: Card, quantity: int, wishlist=None):
+    def add_to_wishlist(self, card: RemoteCard, quantity: int, wishlist: Wishlist = None) -> dict:
         endpoint = "/WishList/AddCardToList"
         data = {
-            "instanceID": card.id,
+            "instanceID": card.atomic_id,
             "quantity": quantity
         }
 
         if wishlist:
-            data["listid"] = wishlist
+            data["listid"] = wishlist.id
 
         response = self._post(endpoint, data=data)
         return response.json()
 
-    def get_wish_lists(self):
+    def get_wish_lists(self) -> List[Wishlist]:
         endpoint = "/WishList"
         response = self._post(endpoint)
-        return response.json()
 
-    def create_wish_list(self, name):
+        soup = BeautifulSoup(response.text, 'html.parser')
+        wish_lists = []
+
+        wishlist_divs = soup.find_all('div', class_='wishlist-list')
+        valid_wishlist_divs = [
+            div for div in wishlist_divs if 'mb-3' not in div.get('class', [])]
+
+        for div in valid_wishlist_divs:
+            for item in div.find_all('div', class_='list-group-item'):
+                if item.find('h6'):
+                    list_id = item.get('listid')
+                    name = item.find('h6').find('a').get_text(strip=True)
+                    wish_lists.append(Wishlist(id=list_id, name=name))
+
+        return wish_lists
+
+    def create_wish_list(self, name: str) -> Wishlist:
+        """Creates a wishlist with the specified name
+        Note that this doesn't handle any errors if the name already exists.
+        Usually you want to call create_or_get_wishlist() instead
+
+        Args:
+            name (str): name of the wishlist to create
+
+        Returns:
+            Wishlist: A local representation of the serverside wishlist (without cards)
+        """
         endpoint = "/WishList/CreateList"
         data = {
             'listname': name
         }
         response = self._post(endpoint, data=data)
-        return response.json()
+        response_data = response.json()
+        return Wishlist(id=response_data['id'], name=name)
+        # return response.json()
+
+    def create_or_get_wishlist(self, name) -> Wishlist:
+        wishlists = self.get_wish_lists()
+        for wishlist in wishlists:
+            if wishlist.name == name:
+                return wishlist
+        else:
+            return self.create_wish_list(name)
 
     # only 'type' value I'm aware of is 4. Also referred to as 'itemtype'
     def update_quantity_on_wishlist(self, card: Card, new_quantity: int, wishlist_id: str, type: int = 4):
@@ -169,7 +195,7 @@ class AtomicEmpireAPI:
     #         response.raise_for_status()
 
 
-def _hydrate_cards_from_response(html_text: str) -> List[Card]:
+def _hydrate_cards_from_response(html_text: str) -> List[RemoteCard]:
     soup = BeautifulSoup(html_text, "html.parser")
     cards = []
 
@@ -188,16 +214,27 @@ def _hydrate_cards_from_response(html_text: str) -> List[Card]:
         else:
             quantity_available = 0
 
-        # details = item.find(
-        #     "p", class_="titledetails").text.strip()
+        details = item.find(
+            "p", class_="titledetails").text.strip()
+        set_name = re.search(r'from (.+)', details).group(1)
 
-        card = Card(
-            id=item_id,
-            name=name,
-            # details=details,
-            quantity=quantity_available,
+        clean_name = name.replace(
+            '[FOIL]', ''
+        ).replace(
+            '[ETCHED]', ''
+        ).replace(
+            '(Surge)', ''
+        ).strip()
+
+        card = RemoteCard(
+            atomic_id=item_id,
+            name=clean_name,
+            details=details,
+            set=set_name,
+            quantity_available=quantity_available,
             foil="[FOIL]" in name,
-            etched="[ETCHED]" in name
+            etched="[ETCHED]" in name,
+            surge="(Surge)" in name,
         )
         cards.append(card)
 

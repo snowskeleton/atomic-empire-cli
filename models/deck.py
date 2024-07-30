@@ -17,8 +17,7 @@ class Deck(Base):
     id = Column(String, primary_key=True)
     name = Column(String)
     cards = relationship("Card", back_populates="deck")
-    # wishlist_id = Column(String, ForeignKey("wishlists.id"))
-    wishlist = relationship("Wishlist", back_populates="deck", uselist=False)
+    # wishlist = relationship("Wishlist", back_populates="deck", uselist=False)
 
     def __init__(self, name: str, cards: List[card.Card] = []):
         self.id = str(uuid4())
