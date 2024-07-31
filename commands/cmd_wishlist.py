@@ -29,6 +29,9 @@ def cli(*args, **options):
         return
 
     selected_card = pick_a_card(cards)
+    if selected_card == None:
+        print("No card selected")
+        return
 
     # Ask the user for the quantity
     quantity = click.prompt('Enter quantity', type=int)

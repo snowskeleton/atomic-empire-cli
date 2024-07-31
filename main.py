@@ -13,7 +13,7 @@ def cli():
 
 @cli.command()
 def get_wishlists():
-    response = AtomicEmpireAPI().get_wish_lists()
+    response = AtomicEmpireAPI().get_wishlists()
     print(response)
 
 

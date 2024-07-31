@@ -8,6 +8,7 @@ from alembic import context
 from models.database import Base
 from models.deck import Deck
 from models.card import Card
+from models.credentials import Credentials
 # from models.wishlist import Wishlist
 
 # this is the Alembic Config object, which provides

@@ -5,6 +5,7 @@ import os.path
 # from time import time
 from typing import List, Callable
 
+import click
 import requests
 from requests import Response, post, get
 from bs4 import BeautifulSoup
@@ -47,12 +48,23 @@ class AtomicEmpireAPI:
             self.session.cookies
             self.authenticated = True
 
-    def __call(self, call: Callable, endpoint: str, **kwargs) -> dict:
+    def __call(self, call: Callable, endpoint: str, **kwargs) -> Response:
         response: Response = call(
             self.base_url + endpoint, **kwargs, headers=self.headers)
-        if response.status_code != 200:
+
+        # retry once on expired login
+        if response.status_code == 401 and response.reason == 'Authentication Required':
+            print("Login expired.")
+            if click.confirm("Try to reauthenticate with saved credentials?", abort=True):
+                from models.crud import get_credentials
+                creds = get_credentials()
+                self.login(creds.email, creds.password)
+                return self.__call(call, endpoint, **kwargs)
+
+        elif response.status_code != 200:
             print(response)
             response.raise_for_status()
+
         return response
 
     def _get(self, url: str, **kwargs) -> Response:
@@ -92,7 +104,7 @@ class AtomicEmpireAPI:
         if in_stock:
             params['instock'] = 1
         if only_foil:
-            # API doesn't differentiate between Foil and Etched, we have to filter later
+            # API doesn't differentiate between Foil and Etched, so we have to filter later
             params['foil'] = 1
         if only_normal:
             params['incfoil'] = 0
@@ -128,12 +140,12 @@ class AtomicEmpireAPI:
         response = self._post(endpoint, data=data)
         return response.json()
 
-    def get_wish_lists(self) -> List[Wishlist]:
+    def get_wishlists(self) -> List[Wishlist]:
         endpoint = "/WishList"
         response = self._post(endpoint)
 
         soup = BeautifulSoup(response.text, 'html.parser')
-        wish_lists = []
+        wishlists = []
 
         wishlist_divs = soup.find_all('div', class_='wishlist-list')
         valid_wishlist_divs = [
@@ -144,11 +156,11 @@ class AtomicEmpireAPI:
                 if item.find('h6'):
                     list_id = item.get('listid')
                     name = item.find('h6').find('a').get_text(strip=True)
-                    wish_lists.append(Wishlist(id=list_id, name=name))
+                    wishlists.append(Wishlist(id=list_id, name=name))
 
-        return wish_lists
+        return wishlists
 
-    def create_wish_list(self, name: str) -> Wishlist:
+    def create_wishlist(self, name: str) -> Wishlist:
         """Creates a wishlist with the specified name
         Note that this doesn't handle any errors if the name already exists.
         Usually you want to call create_or_get_wishlist() instead
@@ -169,12 +181,13 @@ class AtomicEmpireAPI:
         # return response.json()
 
     def create_or_get_wishlist(self, name) -> Wishlist:
-        wishlists = self.get_wish_lists()
+        wishlists = self.get_wishlists()
         for wishlist in wishlists:
             if wishlist.name == name:
                 return wishlist
         else:
-            return self.create_wish_list(name)
+            return self.create_wishlist(name)
+
 
     # only 'type' value I'm aware of is 4. Also referred to as 'itemtype'
     def update_quantity_on_wishlist(self, card: Card, new_quantity: int, wishlist_id: str, type: int = 4):

@@ -6,7 +6,6 @@ import questionary
 from aeapi import AtomicEmpireAPI
 from models.card import Card, RemoteCard, pick_a_card
 from models.crud import save_deck, get_deck, get_decks
-from models.database import db
 
 
 @click.group("deck")
@@ -25,7 +24,7 @@ def add(name: str):
     # 2 Doomfall (HOU)
     # 2 Doomfall (HOU) 62
 
-    deck = get_deck(db, name)
+    deck = get_deck(name)
     lines = []
     newlineCount = 0
     print("Paste your deck here and hit <Enter>:")
@@ -42,7 +41,7 @@ def add(name: str):
         newlineCount = 0
 
     deck.cards = [Card(text=line) for line in lines]
-    save_deck(db=db, deck=deck)
+    save_deck(deck=deck)
     print(deck)
 
 
@@ -52,13 +51,13 @@ def add(name: str):
 @click.option('--names-only', '-o', is_flag=True, default=False, help='Print all deck names')
 def list(name: str, all: bool, names_only: bool):
     if name:
-        deck = get_deck(db=db, deck_name=name)
+        deck = get_deck(deck_name=name)
         print(deck)
     elif names_only:
-        decks = get_decks(db=db)
+        decks = get_decks()
         [print(deck.name) for deck in decks]
     elif all:
-        decks = get_decks(db=db)
+        decks = get_decks()
         [print(deck) for deck in decks]
 
 
@@ -68,7 +67,7 @@ def list(name: str, all: bool, names_only: bool):
 # @click.option('--owned', '-o', is_flag=True, help='Only show cards currently marked as owned')
 # @click.option('--all', '-a', is_flag=True, help='Show all cards in deck')
 def update(name: str):
-    deck = get_deck(db=db, deck_name=name)
+    deck = get_deck(deck_name=name)
 
     cardsToBuy: List[Card]
     cardsToBuy = [card for card in deck.cards]
@@ -84,13 +83,13 @@ def update(name: str):
         if quantity != -1:
             card.quantity_owned = quantity
 
-    save_deck(db=db, deck=deck)
+    save_deck(deck=deck)
 
 
 @cli.command()
 @click.option('--name', '-n', required=True, help='Add purchasable cards from named deck to wishlist')
 def purchase(name: str):
-    deck = get_deck(db=db, deck_name=name)
+    deck = get_deck(deck_name=name)
     wishlist = AtomicEmpireAPI().create_or_get_wishlist('Cards to buy')
     for card in [card for card in deck.cards if card.need_more]:
         kwargs = {
