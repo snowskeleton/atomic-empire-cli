@@ -1,7 +1,7 @@
 import click
 
-from ..aeapi import AtomicEmpireAPI
-from ..decorators import search_options
+from aeapi import AtomicEmpireAPI
+from decorators import search_options
 
 
 @click.group("search")
