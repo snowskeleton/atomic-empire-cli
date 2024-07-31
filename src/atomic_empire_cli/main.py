@@ -11,10 +11,10 @@ def cli():
     pass
 
 
-@cli.command()
-def get_wishlists():
-    response = AtomicEmpireAPI().get_wishlists()
-    print(response)
+# @cli.command()
+# def relogin():
+    # from .aeapi import retry_auth
+    # retry_auth()
 
 
 def main(*args, **kwargs):

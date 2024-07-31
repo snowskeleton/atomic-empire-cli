@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 from .models.card import Card, RemoteCard
 from .models.wishlist import Wishlist
 from .models.search_criteria import SearchCriteria
+from .models.crud import get_credentials
 
 
 class AtomicEmpireAPI:
@@ -55,14 +56,16 @@ class AtomicEmpireAPI:
 
         # retry once on expired login
         if response.status_code == 401 and response.reason == 'Authentication Required':
-            print("Login expired.")
-            if click.confirm("Try to reauthenticate with saved credentials?", abort=True):
-                from models.crud import get_credentials
-                creds = get_credentials()
-                self.login(creds.email, creds.password)
-                return self.__call(call, endpoint, **kwargs)
+            creds = get_credentials()
+            if creds != None:
+                print("Login expired.")
+                if click.confirm("Try to reauthenticate with saved credentials?", abort=True):
+                    self.login(email=creds.email, password=creds.password)
+                    return self.__call(call, endpoint, **kwargs)
+            else:
+                print("Authentication required. Please run:\n\tempire login")
 
-        elif response.status_code != 200:
+        if response.status_code != 200:
             print(response)
             response.raise_for_status()
 
