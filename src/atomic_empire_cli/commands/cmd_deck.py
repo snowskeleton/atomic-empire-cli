@@ -89,9 +89,10 @@ def update(name: str):
 
 @cli.command()
 @click.option('--name', '-n', required=True, help='Add purchasable cards from named deck to wishlist')
-def purchase(name: str):
+@click.option('--wishlist', '-w', 'wishlist_name', default='Cards to buy', show_default=False, help='Name of the wishlist to add cards to')
+def purchase(name: str, wishlist_name: str):
     deck = get_deck(deck_name=name)
-    wishlist = AtomicEmpireAPI().create_or_get_wishlist('Cards to buy')
+    wishlist = AtomicEmpireAPI().create_or_get_wishlist(wishlist_name)
     for card in [card for card in deck.cards if card.need_more]:
         criteria = SearchCriteria(
             name=card.name,
@@ -125,3 +126,5 @@ def purchase(name: str):
                              selected_card.quantity_available),
                 wishlist=wishlist,
             )
+    wishlist_url = f'https://www.atomicempire.com/WishList/{wishlist.id}'
+    print(f'All cards added to wishlist. View wishlist here: {wishlist_url}')

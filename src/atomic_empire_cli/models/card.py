@@ -112,9 +112,9 @@ def pick_a_card(cards: List[Card | RemoteCard], question_text: str = None) -> Ca
     if question_text == None:
         question_text = "Select a card"
 
-    choices = [questionary.Choice(title="None", value=False)]
-    choices += [questionary.Choice(
+    choices = [questionary.Choice(
         title=card.__repr__(), value=card) for card in cards]
+    choices += [questionary.Choice(title="None", value=False)]
 
     selection = questionary.select(
         question_text,
