@@ -1,7 +1,7 @@
 *__pycache__
 .pytest_cache
 .venv
-.vscode
+.vscode*
 
 sql_app.db
 garbage.html
