@@ -7,11 +7,12 @@ from typing import List, Callable
 
 import click
 import requests
-from requests import Response, post, get
+from requests import Response
 from bs4 import BeautifulSoup
 
 from models.card import Card, RemoteCard
 from models.wishlist import Wishlist
+from models.search_criteria import SearchCriteria
 
 
 class AtomicEmpireAPI:
@@ -73,7 +74,7 @@ class AtomicEmpireAPI:
     def _post(self, url: str, **kwargs) -> Response:
         return self.__call(self.session.post, url, **kwargs)
 
-    def login(self, email, password):
+    def login(self, email, password) -> dict:
         login_data = {
             "Email": email,
             "Password": password,
@@ -91,39 +92,23 @@ class AtomicEmpireAPI:
 
     def search_cards(
         self,
-        name: str,
-        in_stock=False,
-        only_foil=False,
-        only_etched=False,
-        only_surge=False,
-        only_special=False,
-        only_normal=False,
+        criteria: SearchCriteria,
     ) -> List[RemoteCard]:
         endpoint = "/Card/List"
-        params = {"txt": name}
-        if in_stock:
+        params = {"txt": criteria.name}
+        if criteria.in_stock:
             params['instock'] = 1
-        if only_foil:
+        if criteria.only_foil:
             # API doesn't differentiate between Foil and Etched, so we have to filter later
             params['foil'] = 1
-        if only_normal:
+        if criteria.only_normal:
             params['incfoil'] = 0
 
         response = self._get(endpoint, params=params)
-        cards = _hydrate_cards_from_response(response.text)
 
-        if only_foil:
-            cards = [card for card in cards if card.foil]
-        if only_etched:
-            cards = [card for card in cards if card.etched]
-        if only_surge:
-            cards = [card for card in cards if card.surge]
-        if only_special:
-            cards = [
-                card for card in cards if any([card.etched, card.foil, card.surge])]
-        if only_normal:
-            cards = [
-                card for card in cards if not any([card.etched, card.foil, card.surge])]
+        cards = hydrate_cards_from_response(response.text)
+        # second manual filtering that goes beyond what the API allows
+        cards = filter_cards(cards, criteria)
 
         return cards
 
@@ -190,7 +175,8 @@ class AtomicEmpireAPI:
 
 
     # only 'type' value I'm aware of is 4. Also referred to as 'itemtype'
-    def update_quantity_on_wishlist(self, card: Card, new_quantity: int, wishlist_id: str, type: int = 4):
+
+    def update_quantity_on_wishlist(self, card: Card, new_quantity: int, wishlist_id: str, type: int = 4) -> dict:
         endpoint = "/UpdateQuantity"
         data = {
             'listid': wishlist_id,
@@ -221,7 +207,7 @@ class AtomicEmpireAPI:
     #         response.raise_for_status()
 
 
-def _hydrate_cards_from_response(html_text: str) -> List[RemoteCard]:
+def hydrate_cards_from_response(html_text: str) -> List[RemoteCard]:
     soup = BeautifulSoup(html_text, "html.parser")
     cards = []
 
@@ -264,4 +250,20 @@ def _hydrate_cards_from_response(html_text: str) -> List[RemoteCard]:
         )
         cards.append(card)
 
+    return cards
+
+
+def filter_cards(cards: List[Card], criteria: SearchCriteria) -> List[Card]:
+    if criteria.only_foil:
+        cards = [card for card in cards if card.foil]
+    if criteria.only_etched:
+        cards = [card for card in cards if card.etched]
+    if criteria.only_surge:
+        cards = [card for card in cards if card.surge]
+    if criteria.only_special:
+        cards = [
+            card for card in cards if any([card.etched, card.foil, card.surge])]
+    if criteria.only_normal:
+        cards = [
+            card for card in cards if not any([card.etched, card.foil, card.surge])]
     return cards
