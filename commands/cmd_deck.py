@@ -4,7 +4,7 @@ import click
 import questionary
 
 from aeapi import AtomicEmpireAPI
-from models.card import Card
+from models.card import Card, RemoteCard, pick_a_card
 from models.crud import save_deck, get_deck, get_decks
 from models.database import db
 
@@ -106,23 +106,17 @@ def purchase(name: str):
         if all(card.foil == False, card.etched == False, card.surge == False):
             kwargs.update({'only_normal': True})
         remote_cards = AtomicEmpireAPI().search_cards(**kwargs)
-        # remote_cards = _search(**kwargs)
 
         if len(remote_cards) == 0:
             print(f'None in stock for: {card.name}')
             continue
 
-        choices = [questionary.Choice(title="None", value=False)]
-        choices += [questionary.Choice(
-            title=card.__repr__(), value=card) for card in remote_cards]
-        selection = questionary.select(
-            "Select the cards you want to add to your wishlist:",
-            choices=choices,
-            show_selected=True,
-        ).unsafe_ask()
-        if selection:
+        selected_card = pick_a_card(remote_cards)
+
+        if selected_card:
             AtomicEmpireAPI().add_to_wishlist(
-                card=selection,
-                quantity=min(card.count_needed, selection.quantity_available),
+                card=selected_card,
+                quantity=min(card.count_needed,
+                             selected_card.quantity_available),
                 wishlist=wishlist,
             )

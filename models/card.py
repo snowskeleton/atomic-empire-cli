@@ -4,6 +4,9 @@ import re
 import uuid
 
 from dataclasses import dataclass
+from typing import List
+
+import questionary
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
@@ -79,3 +82,42 @@ class Card(Base):
 
     def __repr__(self):
         return ' '.join([f'{self.quantity_owned}/{self.quantity_needed}', self.name])
+
+
+@dataclass
+class RemoteCard():
+    atomic_id: str
+    name: str
+    set: str
+    details: str
+    foil: bool
+    etched: bool
+    surge: bool
+    quantity_available: int
+
+    def __repr__(self):
+        joinList = [str(self.quantity_available), self.name, self.set]
+        if self.surge:
+            joinList.append('[S]')
+        if self.foil:
+            joinList.append('[F]')
+        if self.etched:
+            joinList.append('[E]')
+        return ' '.join(joinList)
+
+
+def pick_a_card(cards: List[Card | RemoteCard], question_text: str = None) -> Card | RemoteCard:
+    if question_text == None:
+        question_text = "Select a card"
+
+    choices = [questionary.Choice(title="None", value=False)]
+    choices += [questionary.Choice(
+        title=card.__repr__(), value=card) for card in cards]
+
+    selection = questionary.select(
+        question_text,
+        choices=choices,
+        show_selected=True,
+    ).unsafe_ask()
+
+    return selection

@@ -2,16 +2,12 @@ import click
 
 from aeapi import AtomicEmpireAPI
 from decorators import search_options
+from models.card import pick_a_card
 
 
-@click.group("wishlist")
-def cli():
-    pass
-
-
-@cli.command()
+@click.command("wishlist")
 @search_options
-def wishlist(*args, **options):
+def cli(*args, **options):
     name = options.get('name')
     in_stock = options.get('in_stock')
     foil = options.get('foil')
@@ -32,16 +28,7 @@ def wishlist(*args, **options):
         print("No cards found with search terms.")
         return
 
-    for idx, card in enumerate(cards):
-        print(f"{idx + 1}. {card}")
-
-    # Ask the user to select a card
-    card_index = click.prompt('Select a card by number', type=int) - 1
-    if card_index < 0 or card_index >= len(cards):
-        print("Invalid selection.")
-        return
-
-    selected_card = cards[card_index]
+    selected_card = pick_a_card(cards)
 
     # Ask the user for the quantity
     quantity = click.prompt('Enter quantity', type=int)
@@ -52,7 +39,6 @@ def wishlist(*args, **options):
     # create new wishlist
     wishlist_name = click.prompt('Name your new wishlist', type=str)
     wishlist = AtomicEmpireAPI().create_or_get_wishlist(wishlist_name)
-    # wishlist_id = api.create_wish_list(wishlist_name)['id']
 
     # Add the selected card to wishlist
     try:

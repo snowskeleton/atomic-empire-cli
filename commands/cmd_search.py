@@ -4,14 +4,9 @@ from aeapi import AtomicEmpireAPI
 from decorators import search_options
 
 
-@click.group("search")
-def cli():
-    pass
-
-
-@cli.command()
+@click.command("search")
 @search_options
-def search(*args, **options):
+def cli(*args, **options):
     name = options.get('name')
     in_stock = options.get('in_stock')
     foil = options.get('foil')

@@ -9,8 +9,7 @@ import requests
 from requests import Response, post, get
 from bs4 import BeautifulSoup
 
-from models.card import Card
-from models.remote_card import RemoteCard
+from models.card import Card, RemoteCard
 from models.wishlist import Wishlist
 
 
