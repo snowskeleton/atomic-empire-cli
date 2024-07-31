@@ -1,16 +1,6 @@
-from functools import update_wrapper
-from typing import List
-
 import click
-import questionary
 
 from aeapi import AtomicEmpireAPI
-
-from models.database import db
-from models.card import Card
-from models.deck import Deck
-from models.crud import save_deck, get_deck, get_decks
-from models.remote_card import RemoteCard
 
 from commands import build_in_cmds
 
@@ -19,15 +9,6 @@ from commands import build_in_cmds
 @click.group()
 def cli():
     pass
-
-
-@cli.command()
-@click.option('--email', '-e', prompt=True, help='Login email for atomicempire.com')
-@click.option('--password', '-p', prompt=True, hide_input=True, confirmation_prompt=True, help='Login password for atomicempire.com')
-def login(email: str, password: str):
-    api = AtomicEmpireAPI()
-    api.login(email, password)
-    print('Login successfull')
 
 
 @cli.command()

@@ -4,12 +4,14 @@ from . import (
     cmd_deck,
     cmd_search,
     cmd_wishlist,
+    cmd_login,
 )
 
 cli_commands = [
     cmd_deck.cli,
     cmd_search.cli,
     cmd_wishlist.cli,
+    cmd_login.cli,
 ]
 
 
