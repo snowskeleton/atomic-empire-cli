@@ -13,3 +13,5 @@ Base = declarative_base()
 
 # Create all tables in the in-memory database
 Base.metadata.create_all(bind=engine)
+
+db = SessionLocal()

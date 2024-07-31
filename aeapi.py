@@ -80,25 +80,39 @@ class AtomicEmpireAPI:
 
     def search_cards(
         self,
-        query,
+        name: str,
         in_stock=False,
         only_foil=False,
-        include_foil=True,
+        only_etched=False,
+        only_surge=False,
+        only_special=False,
+        only_normal=False,
     ) -> List[RemoteCard]:
         endpoint = "/Card/List"
-        params = {"txt": query}
+        params = {"txt": name}
         if in_stock:
             params['instock'] = 1
         if only_foil:
-            # API doesn't differentiate between Foil and Etched
+            # API doesn't differentiate between Foil and Etched, we have to filter later
             params['foil'] = 1
-        if not include_foil:
+        if only_normal:
             params['incfoil'] = 0
 
         response = self._get(endpoint, params=params)
-        # with open("garbage.html", 'w') as file:
-        #     file.write(response.text)
         cards = _hydrate_cards_from_response(response.text)
+
+        if only_foil:
+            cards = [card for card in cards if card.foil]
+        if only_etched:
+            cards = [card for card in cards if card.etched]
+        if only_surge:
+            cards = [card for card in cards if card.surge]
+        if only_special:
+            cards = [
+                card for card in cards if any([card.etched, card.foil, card.surge])]
+        if only_normal:
+            cards = [
+                card for card in cards if not any([card.etched, card.foil, card.surge])]
 
         return cards
 
