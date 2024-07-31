@@ -1,6 +1,7 @@
 *__pycache__
 .pytest_cache
 .venv
+.vscode
 
 sql_app.db
 garbage.html

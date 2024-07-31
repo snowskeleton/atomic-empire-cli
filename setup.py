@@ -39,4 +39,7 @@ setup(name=read_from_file("__title__"),
     'requests',
     'sqlalchemy',
 ],
-    entry_points={"console_scripts": ["empire = atomic_empire_cli.main:main"]})
+    entry_points={"console_scripts": [
+        "empire = atomic_empire_cli.main:main",
+        "empire-db-init=atomic_empire_cli.db:upgrade_db",
+    ]})

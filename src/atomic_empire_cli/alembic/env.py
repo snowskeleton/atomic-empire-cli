@@ -5,11 +5,10 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from models.database import Base
-from models.deck import Deck
-from models.card import Card
-from models.credentials import Credentials
-# from models.wishlist import Wishlist
+from atomic_empire_cli.models.database import Base
+from atomic_empire_cli.models.deck import Deck
+from atomic_empire_cli.models.card import Card
+from atomic_empire_cli.models.credentials import Credentials
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
