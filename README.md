@@ -15,5 +15,5 @@ empire login
 empire deck add --name "Deck name"
     <paste your deck in Arena format when prompted>
 
-empire deck purchase
+empire deck purchase -n "Deck name"
 ```
