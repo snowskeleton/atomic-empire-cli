@@ -6,6 +6,7 @@ import questionary
 from aeapi import AtomicEmpireAPI
 from models.card import Card, RemoteCard, pick_a_card
 from models.crud import save_deck, get_deck, get_decks
+from models.search_criteria import SearchCriteria
 
 
 @click.group("deck")
@@ -92,19 +93,19 @@ def purchase(name: str):
     deck = get_deck(deck_name=name)
     wishlist = AtomicEmpireAPI().create_or_get_wishlist('Cards to buy')
     for card in [card for card in deck.cards if card.need_more]:
-        kwargs = {
-            'name': card.name,
-            'in_stock': True,
-        }
-        if card.foil != None:
-            kwargs.update({'only_foil': card.foil})
-        if card.surge != None:
-            kwargs.update({'only_surge': card.surge})
-        if card.etched != None:
-            kwargs.update({'only_etched': card.etched})
-        if all(card.foil == False, card.etched == False, card.surge == False):
-            kwargs.update({'only_normal': True})
-        remote_cards = AtomicEmpireAPI().search_cards(**kwargs)
+        criteria = SearchCriteria(
+            name=card.name,
+            in_stock=True,
+            only_foil=card.foil,
+            only_surge=card.surge,
+            only_etched=card.etched,
+            only_normal=all(
+                card.foil == False,
+                card.etched == False,
+                card.surge == False
+            ),
+        )
+        remote_cards = AtomicEmpireAPI().search_cards(criteria=criteria)
 
         if len(remote_cards) == 0:
             print(f'None in stock for: {card.name}')

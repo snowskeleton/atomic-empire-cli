@@ -24,6 +24,7 @@ class Card(Base):
     name = Column(String)
     set = Column(String)
     foil = Column(Boolean)
+    surge = Column(Boolean)
     etched = Column(Boolean)
     quantity_owned = Column(Integer)
     quantity_needed = Column(Integer)
@@ -40,7 +41,7 @@ class Card(Base):
     def count_needed(self) -> int:
         return self.quantity_needed - self.quantity_owned
 
-    def __init__(self, deck: deck.Deck = None, text: str = None, foil: bool = None, etched: bool = None, card: Card = None):
+    def __init__(self, deck: deck.Deck = None, text: str = None, foil: bool = None, surge: bool = None, etched: bool = None, card: Card = None):
         """create object from text input, with format
         <amount> <Card Name> (<Set>) <Collector Number>
         where "amount", "set", and "collector number" are optional.
@@ -59,6 +60,7 @@ class Card(Base):
         self.set = ""
         self.collector_number = None
         self.foil = foil
+        self.surge = surge
         self.etched = etched
         # self.bought = False
 

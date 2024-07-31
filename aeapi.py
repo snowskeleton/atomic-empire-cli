@@ -260,9 +260,9 @@ def filter_cards(cards: List[Card], criteria: SearchCriteria) -> List[Card]:
         cards = [card for card in cards if card.etched]
     if criteria.only_surge:
         cards = [card for card in cards if card.surge]
-    if criteria.only_special:
-        cards = [
-            card for card in cards if any([card.etched, card.foil, card.surge])]
+    # if criteria.only_special:
+    #     cards = [
+    #         card for card in cards if any([card.etched, card.foil, card.surge])]
     if criteria.only_normal:
         cards = [
             card for card in cards if not any([card.etched, card.foil, card.surge])]
