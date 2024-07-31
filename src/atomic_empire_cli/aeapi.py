@@ -64,6 +64,8 @@ class AtomicEmpireAPI:
                     return self.__call(call, endpoint, **kwargs)
             else:
                 print("Authentication required. Please run:\n\tempire login")
+                import sys
+                sys.exit()
                 click.Abort()
 
 
