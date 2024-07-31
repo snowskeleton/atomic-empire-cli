@@ -1,8 +1,8 @@
 import click
 
-from aeapi import AtomicEmpireAPI
-from models.credentials import Credentials
-from models.crud import get_credentials, save_credentials
+from ..aeapi import AtomicEmpireAPI
+from ..models.credentials import Credentials
+from ..models.crud import get_credentials, save_credentials
 
 
 # https://github.com/pallets/click/issues/921

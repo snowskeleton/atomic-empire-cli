@@ -10,9 +10,9 @@ import requests
 from requests import Response
 from bs4 import BeautifulSoup
 
-from models.card import Card, RemoteCard
-from models.wishlist import Wishlist
-from models.search_criteria import SearchCriteria
+from .models.card import Card, RemoteCard
+from .models.wishlist import Wishlist
+from .models.search_criteria import SearchCriteria
 
 
 class AtomicEmpireAPI:
@@ -172,7 +172,6 @@ class AtomicEmpireAPI:
                 return wishlist
         else:
             return self.create_wishlist(name)
-
 
     # only 'type' value I'm aware of is 4. Also referred to as 'itemtype'
 

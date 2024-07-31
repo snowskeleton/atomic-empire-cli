@@ -1,0 +1,8 @@
+__author__ = "snowskeleton"
+__author_email__ = "isaac@snowskeleton.net"
+__description__ = "CLI tool to control atomicempire.com"
+__license__ = "Apache 2.0"
+__version__ = "0.0.0-0"
+__status__ = "Development"
+__title__ = "atomic-empire-cli"
+__url__ = "https://github.com/snowskeleton/atomic-empire-cli"

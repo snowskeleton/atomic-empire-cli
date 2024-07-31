@@ -1,8 +1,8 @@
 import click
 
-from aeapi import AtomicEmpireAPI
-from decorators import search_options
-from models.search_criteria import SearchCriteria
+from ..aeapi import AtomicEmpireAPI
+from ..decorators import search_options
+from ..models.search_criteria import SearchCriteria
 
 
 @click.command("search")

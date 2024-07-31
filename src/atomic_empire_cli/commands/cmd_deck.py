@@ -1,12 +1,11 @@
 from typing import List
 
 import click
-import questionary
 
-from aeapi import AtomicEmpireAPI
-from models.card import Card, RemoteCard, pick_a_card
-from models.crud import save_deck, get_deck, get_decks
-from models.search_criteria import SearchCriteria
+from ..aeapi import AtomicEmpireAPI
+from ..models.card import Card, pick_a_card
+from ..models.crud import save_deck, get_deck, get_decks
+from ..models.search_criteria import SearchCriteria
 
 
 @click.group("deck")
@@ -59,7 +58,8 @@ def list(name: str, all: bool, names_only: bool):
         [print(deck.name) for deck in decks]
     elif all:
         decks = get_decks()
-        [print(deck) for deck in decks]
+        printableDecks = '\n\n'.join([deck.__repr__() for deck in decks])
+        print(printableDecks)
 
 
 @cli.command()
@@ -99,11 +99,16 @@ def purchase(name: str):
             only_foil=card.foil,
             only_surge=card.surge,
             only_etched=card.etched,
-            only_normal=all(
+            only_special=all([
+                card.foil == True,
+                card.etched == True,
+                card.surge == True,
+            ]),
+            only_normal=all([
                 card.foil == False,
                 card.etched == False,
-                card.surge == False
-            ),
+                card.surge == False,
+            ]),
         )
         remote_cards = AtomicEmpireAPI().search_cards(criteria=criteria)
 

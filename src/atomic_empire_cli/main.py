@@ -1,8 +1,8 @@
 import click
 
-from aeapi import AtomicEmpireAPI
+from .aeapi import AtomicEmpireAPI
 
-from commands import build_in_cmds
+from .commands import build_in_cmds
 
 
 @build_in_cmds
@@ -15,6 +15,10 @@ def cli():
 def get_wishlists():
     response = AtomicEmpireAPI().get_wishlists()
     print(response)
+
+
+def main(*args, **kwargs):
+    cli(*args, **kwargs)
 
 
 if __name__ == "__main__":

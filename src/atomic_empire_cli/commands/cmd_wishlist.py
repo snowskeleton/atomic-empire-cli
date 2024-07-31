@@ -1,9 +1,9 @@
 import click
 
-from aeapi import AtomicEmpireAPI
-from decorators import search_options
-from models.card import pick_a_card
-from models.search_criteria import SearchCriteria
+from ..aeapi import AtomicEmpireAPI
+from ..decorators import search_options
+from ..models.card import pick_a_card
+from ..models.search_criteria import SearchCriteria
 
 
 @click.command("wishlist")

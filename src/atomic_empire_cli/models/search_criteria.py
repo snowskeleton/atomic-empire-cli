@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 
+@dataclass
 class SearchCriteria():
     name: str
     in_stock: bool
